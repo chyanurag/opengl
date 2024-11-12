@@ -63,7 +63,7 @@ int main() {
 
         shader.use();
         shader.setFloat("ourColor", 1.0f);
-        shader.setFloat("offset", tan(offset) + 1.f);
+        shader.setFloat("offset", tan(offset));
         offset += .01f;
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
