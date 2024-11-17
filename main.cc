@@ -8,6 +8,7 @@
 #include "vao.h"
 #include "ebo.h"
 #include "stb.h"
+#include "texture.h"
 
 float vertices[] = {
         // positions          // colors           // texture coords
@@ -39,31 +40,32 @@ int main() {
     vao.Unbind();
     vbo.Unbind();
 
-    // Texture loading
-    int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("modiji.jpg", &width, &height, &nrChannels, 0);
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glGenerateMipmap(GL_TEXTURE_2D);
+
+    Texture2D texture("modiji.jpg");
+    Texture2D texture2("meloni.png");
+
+    shader.use_program();
+    shader.SetInt("texture1", 0);
+    shader.SetInt("texture2", 1);
+    float mixValue = .1f;
+    shader.SetFloat("mixValue", mixValue);
 
     std::function<void (void)> draw = [&] (){
         glClear(GL_COLOR_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        texture.Bind();
+        glActiveTexture(GL_TEXTURE1);
+        texture2.Bind();
+        shader.SetFloat("mixValue", mixValue);
         shader.use_program();
+        if (mixValue < 1.f)  {
+            mixValue += .002;
+        }
         vao.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     };
 
     renderer.run(draw);
-
-    stbi_image_free(data);
     return 0;
 }

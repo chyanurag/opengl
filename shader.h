@@ -61,6 +61,13 @@ class Shader {
             }
         }
 
+        void SetInt(std::string property, int value) {
+            glUniform1i(glGetUniformLocation(shaderProgram, property.c_str()), value);
+        }
+
+        void SetFloat(std::string property, float value) {
+            glUniform1f(glGetUniformLocation(shaderProgram, property.c_str()), value);
+        }
 
         ~Shader() {
             glDeleteShader(vertexShader);
