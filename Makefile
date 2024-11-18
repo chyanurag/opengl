@@ -6,3 +6,4 @@ stb.o:
 
 clean:
 	rm -f main
+	rm -f stb.o
