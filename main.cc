@@ -14,6 +14,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "camera.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -77,26 +78,29 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
-float zTrans = 0.f;
-float xTrans = 0.f;
+Camera camera;
 
-float xRot = 0.f;
-float yRot = 0.f;
-float zRot = 0.f;
-
-void process_events(GLFWwindow* window) {
+void process_events(GLFWwindow* window, Camera& camera, float dt) {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        zTrans += .1f;
+        camera.ProcessKeyboard(FORWARD, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        zTrans -= .1f;
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        xTrans -= .1f;
+        camera.ProcessKeyboard(BACKWARD, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        xTrans += .1f;
+        camera.ProcessKeyboard(LEFT, dt);
     }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.ProcessKeyboard(RIGHT, dt);
+    }
+}
+
+void mousePosCallback(GLFWwindow* window, double xpos, double ypos) {
+    camera.ProcessMouseMovement(xpos, ypos, false);
+}
+
+void mouseScrollCallback(GLFWwindow* window, double xoff, double yoff) {
+    camera.ProcessMouseScroll(yoff);
 }
 
 int main() {
@@ -131,24 +135,33 @@ int main() {
     glm::mat4 view          = glm::mat4(1.0f);
     glm::mat4 projection    = glm::mat4(1.0f);
     projection = glm::perspective(glm::radians(90.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-    view       = glm::translate(view, glm::vec3(xTrans, 0.0f, -2.f));
+    view       = glm::translate(view, glm::vec3(0.f, 0.0f, -2.f));
     glm::mat4 model = glm::mat4(1.0f);
     shader.SetMat4("model", model);
     shader.SetMat4("projection", projection);
     shader.SetMat4("view", view);
 
+    float last = 0.f;
+    float dt = 0.f;
+
+    glfwSetInputMode(renderer.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(renderer.window, mousePosCallback);
+    glfwSetScrollCallback(renderer.window, mouseScrollCallback);
+
     std::function<void (void)> draw = [&] (){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
-        texture.Bind();
 
+        texture.Bind();
         shader.use_program();
-        angle += .01f;
-        view = glm::rotate(view, glm::radians(angle), glm::vec3(1.f, 1.f, 1.f));
-        shader.SetMat4("view", view);
         vao.Bind();
+        float curr = glfwGetTime();
+        dt = curr - last;
+        last = curr;
+        process_events(renderer.window, camera, dt);
+        view = camera.GetViewMatrix();
+        shader.SetMat4("view", view);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        process_events(renderer.window);
     };
 
     renderer.run(draw);
