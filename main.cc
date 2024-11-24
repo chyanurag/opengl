@@ -11,10 +11,10 @@
 #include "stb.h"
 #include "texture.h"
 #include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "camera.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -78,29 +78,19 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
-Camera camera;
-
-void process_events(GLFWwindow* window, Camera& camera, float dt) {
+void process_events(GLFWwindow* window, glm::mat4& view, float dt) {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.ProcessKeyboard(FORWARD, dt);
+        view = glm::translate(view, glm::vec3(0.f, 0.f, dt*10.f));
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.ProcessKeyboard(BACKWARD, dt);
+        view = glm::translate(view, glm::vec3(0.f, 0.f, -dt*10.f));
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.ProcessKeyboard(LEFT, dt);
+        view = glm::translate(view, glm::vec3(dt*10.f, 0.f, 0.f));
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.ProcessKeyboard(RIGHT, dt);
+        view = glm::translate(view, glm::vec3(-dt*10.f, 0.f, 0.f));
     }
-}
-
-void mousePosCallback(GLFWwindow* window, double xpos, double ypos) {
-    camera.ProcessMouseMovement(xpos, ypos, false);
-}
-
-void mouseScrollCallback(GLFWwindow* window, double xoff, double yoff) {
-    camera.ProcessMouseScroll(yoff);
 }
 
 int main() {
@@ -144,10 +134,6 @@ int main() {
     float last = 0.f;
     float dt = 0.f;
 
-    glfwSetInputMode(renderer.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(renderer.window, mousePosCallback);
-    glfwSetScrollCallback(renderer.window, mouseScrollCallback);
-
     std::function<void (void)> draw = [&] (){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
@@ -158,8 +144,7 @@ int main() {
         float curr = glfwGetTime();
         dt = curr - last;
         last = curr;
-        process_events(renderer.window, camera, dt);
-        view = camera.GetViewMatrix();
+        process_events(renderer.window, view, dt);
         shader.SetMat4("view", view);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     };
