@@ -15,6 +15,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "camera.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -78,18 +79,20 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
-void process_events(GLFWwindow* window, glm::mat4& view, float dt) {
+Camera camera;
+
+void process_events(GLFWwindow* window, Camera &camera, float dt) {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        view = glm::translate(view, glm::vec3(0.f, 0.f, dt*10.f));
+        camera.move(Forward, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        view = glm::translate(view, glm::vec3(0.f, 0.f, -dt*10.f));
+        camera.move(Backward, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        view = glm::translate(view, glm::vec3(dt*10.f, 0.f, 0.f));
+        camera.move(Left, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        view = glm::translate(view, glm::vec3(-dt*10.f, 0.f, 0.f));
+        camera.move(Right, dt);
     }
 }
 
@@ -144,8 +147,9 @@ int main() {
         float curr = glfwGetTime();
         dt = curr - last;
         last = curr;
-        process_events(renderer.window, view, dt);
-        shader.SetMat4("view", view);
+        process_events(renderer.window, camera, dt);
+        camera.update();
+        shader.SetMat4("view", camera.GetViewMatrix());
         glDrawArrays(GL_TRIANGLES, 0, 36);
     };
 
